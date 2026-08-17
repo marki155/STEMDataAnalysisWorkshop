@@ -1,0 +1,22 @@
+[workspace]
+name = "stem-data-analysis-workshop"
+description = "EELS- und EDX-Auswertung mit HyperSpy - Workshop-Umgebung"
+channels = ["conda-forge"]
+platforms = ["linux-64", "win-64", "osx-64", "osx-arm64"]
+
+[dependencies]
+python = "3.12.*"
+hyperspy = ">=2.2"
+exspy = ">=0.3"
+hyperspy-gui-ipywidgets = ">=2.0"
+numpy = ">=1.26"
+scipy = ">=1.11"
+matplotlib-base = ">=3.8"
+ipympl = ">=0.9"
+jupyterlab = ">=4.2"
+ipykernel = "*"
+pooch = "*"
+
+[tasks]
+lab = { cmd = "jupyter lab", description = "JupyterLab starten" }
+check = { cmd = "python check_setup.py", description = "Installation pruefen" }

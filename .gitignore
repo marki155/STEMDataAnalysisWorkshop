@@ -1,0 +1,24 @@
+# pixi
+.pixi/
+
+# Messdaten - werden separat heruntergeladen, nicht ins Repo!
+# Der Ordner selbst bleibt (mit Anleitung), sein Inhalt nicht.
+data/*
+!data/README.md
+*.dm3
+*.dm4
+*.emd
+*.hspy
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
