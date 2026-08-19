@@ -106,9 +106,6 @@ STEMDataAnalysisWorkshop/
 └── README.md
 ```
 
-> Notebook 03 needs a second dataset (`data/lamella/`) that is **not** in the ZIP.
-> `pixi run check` reports it as "missing (optional)" - that is intended, not an error.
-
 > **The most common mistake is one folder level too many** - i.e.
 > `data/measurements/nanopore/...` instead of `data/nanopore/...`. The notebooks
 > usually still find the files, but step 4 will tell you exactly what it found where.
@@ -152,7 +149,7 @@ JupyterLab opens in your browser. Work through the notebooks in this order:
 | `00_setup_check.ipynb` | Checks installation, interactive plots and widgets |
 | `01_EELS_modeling.ipynb` | EELS: align, background, edge model, fine structure |
 | `02_EDX_modeling.ipynb` | EDX: line selection, model fit, background windows |
-| `03_EELS_lamella_analysis.ipynb` | EELS on a lamella, Ca speciation *(needs extra data, see below)* |
+| `03_your_own_data.ipynb` | Template for your own measurements |
 
 **Always start the notebooks through `pixi run lab`.** If you start JupyterLab any
 other way (a system-wide Jupyter, say), it uses the wrong Python and none of the
@@ -282,38 +279,47 @@ once end to end.
 | Folder | Size | Used by | In the participant ZIP |
 | --- | --- | --- | --- |
 | `data/nanopore/` | 152 MB (ZIP: 43 MB) | notebooks 01 + 02 | yes |
-| `data/lamella/` | ~320 MB | notebook 03 (lamella, Ca references) | no |
 
-The `OPTIONAL` set in `notebooks/workshop_data.py` controls which datasets may be
-missing without `pixi run check` reporting an error.
+That is the only dataset the workshop ships with. `03_your_own_data.ipynb` is a
+template for measurements you add later.
 
-### Notes on notebook 03
+### Adding your own measurements
 
-The lamella dataset covers 138-650 eV. Ga, W and Pt - which the original notebook
-listed - have no edges in that range at all (their nearest are at 1115, 1809 and
-2122 eV), and exspy dropped them silently. The elements actually measurable are
-Si, S, C, Ca and O.
+Drop the files into a subfolder of `data/`, then either point at them directly:
 
-The fine structure is fitted with the six Ca references rather than the Si ones,
-which only overlap this data by about a third. In a test run the Ca signal came out
-confined to roughly 5% of the pixels as a coherent band at the top edge of the field
-of view, dominated by CaSO4 - consistent with the S edges at 165 and 229 eV in the
-same data. Above 360 eV the fit deviates visibly; six references with `shift` held
-fixed cannot capture the shape there. Good enough for teaching, not for publication.
+```python
+signal = load_path("my_sample/EELS SI.dm4", signal_type="EELS")
+```
 
-### Adding new datasets
-
-Extend the `DATASETS` dictionary in `notebooks/workshop_data.py`:
+or, once you use a file repeatedly, give it a name by extending `DATASETS` in
+`notebooks/workshop_data.py`:
 
 ```python
 DATASETS = {
-    "my_dataset": "subfolder/My File.dm4",
+    "my_sample_eels": "my_sample/EELS SI.dm4",
     ...
 }
 ```
 
-Then use `load("my_dataset")` in the notebook. Never write fixed paths into a
-notebook - they break on the next machine.
+`load("my_sample_eels")` then works in every notebook and `pixi run check`
+verifies the file is present. If the file is not part of the shared ZIP, add its
+name to `OPTIONAL` in the same file so a missing file is a note, not an error.
+
+Never write fixed paths into a notebook - they break on the next machine.
+
+### Two silent failure modes worth knowing about
+
+Both cost real time during development, because **neither raises an error**:
+
+- `add_elements` accepts any element and then silently drops the ones whose edges
+  lie outside the recorded energy window. The model quietly omits them and the
+  results look plausible but mean nothing.
+- `remove_background` accepts a `signal_range` that is not inside the data at all
+  and returns something meaningless.
+
+`workshop_data.check_elements(signal, elements)` and
+`workshop_data.check_background_window(signal, window)` catch both. Notebook 03
+runs them before every model; it is worth doing the same for your own analyses.
 
 ### Before distributing
 

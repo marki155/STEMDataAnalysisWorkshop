@@ -19,10 +19,11 @@ data/
     └── Si Standards/
 ```
 
-That is all you need for notebooks 00, 01 and 02.
+That is all the workshop needs.
 
-Notebook 03 additionally needs `data/lamella/` (the lamella dataset with the Ca
-reference spectra). It is not in the ZIP - if it is missing, that is not an error.
+Your own measurements go into subfolders next to `nanopore`, for example
+`data/my_sample/`. `03_your_own_data.ipynb` shows how to use them; nothing in
+`data/` is ever committed to the repository.
 
 Not like this (one folder level too many - the most common mistake):
 
