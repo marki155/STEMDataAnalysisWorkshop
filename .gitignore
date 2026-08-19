@@ -22,3 +22,7 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Lokale Rohdatenkopie (17 GB, gehoert nicht ins Repo)
+eels spectra/
+*.msa

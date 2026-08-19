@@ -11,7 +11,10 @@ exspy = ">=0.3"
 hyperspy-gui-ipywidgets = ">=2.0"
 numpy = ">=1.26"
 scipy = ">=1.11"
-matplotlib-base = ">=3.8"
+# <3.11: HyperSpy 2.4.0 uebergibt Marker-Farben in einem Format, das
+# matplotlib 3.11 elementweise zerlegt -> "Invalid RGBA argument".
+# Betrifft u.a. plot(background_windows=...) in Notebook 02.
+matplotlib-base = ">=3.8,<3.11"
 ipympl = ">=0.9"
 jupyterlab = ">=4.2"
 ipykernel = "*"

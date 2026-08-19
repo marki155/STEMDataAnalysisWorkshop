@@ -26,17 +26,28 @@ DATASETS = {
     "adf": "nanopore/ADF Image.dm4",
     "adf_survey": "nanopore/ADF Image (SI Survey).dm4",
     "si_standards": "nanopore/Si Standards",  # Ordner mit Referenzspektren
-    # Praktikums-Datensatz
+    # Praktikums-Datensatz (lamella) - optional, siehe OPTIONAL unten
     "praktikum_eels_highloss": "praktikum/EELS HL SI.dm4",
     "praktikum_eels_lowloss": "praktikum/EELS LL SI.dm4",
     "praktikum_adf": "praktikum/JEOL Image.dm4",
+    "ca_standards": "praktikum/Ca Standards",  # Ordner mit Ca-Referenzspektren
+}
+
+# Diese Datensaetze sind nicht im Teilnehmenden-ZIP enthalten (nur 'nanopore').
+# Sie werden ausschliesslich von Notebook 03 gebraucht. Fehlen sie, ist das
+# kein Fehler - 'pixi run check' meldet sie nur als Hinweis.
+OPTIONAL = {
+    "praktikum_eels_highloss",
+    "praktikum_eels_lowloss",
+    "praktikum_adf",
+    "ca_standards",
 }
 
 DOWNLOAD_HINT = (
     "So behebst du das:\n"
     "  1. Lade das Daten-ZIP herunter (Link steht in der README).\n"
-    "  2. Entpacke es so, dass die Ordner 'nanopore' und 'praktikum'\n"
-    f"     DIREKT in diesem Ordner liegen:\n     {DATA_DIR}\n"
+    "  2. Entpacke es so, dass der Ordner 'nanopore' DIREKT\n"
+    f"     in diesem Ordner liegt:\n     {DATA_DIR}\n"
     "  3. Fuehre diese Zelle erneut aus.\n\n"
     "Haeufigster Fehler: ein Ordner zu viel, also\n"
     "  data/messdaten/nanopore/...   statt   data/nanopore/...\n"
@@ -161,18 +172,28 @@ def load_standards(name="si_standards", sigma=None):
 def status():
     """Zeigt an, welche Datensaetze gefunden werden - fuer den Setup-Check."""
     print(f"Datenordner: {DATA_DIR}\n")
-    fehlend = []
+    fehlend_pflicht, fehlend_optional = [], []
     for name in sorted(DATASETS):
+        marke = " (optional)" if name in OPTIONAL else ""
         try:
             p = path(name)
             print(f"  [ok]     {name:26s} -> {p.relative_to(DATA_DIR)}")
         except FileNotFoundError:
-            print(f"  [fehlt]  {name:26s}")
-            fehlend.append(name)
+            print(f"  [fehlt]  {name:26s}{marke}")
+            (fehlend_optional if name in OPTIONAL else fehlend_pflicht).append(name)
     print()
-    if fehlend:
-        print(f"{len(fehlend)} von {len(DATASETS)} Datensaetzen fehlen.\n")
+
+    if fehlend_optional:
+        print(
+            f"{len(fehlend_optional)} optionale Datensaetze fehlen. Das ist normal:\n"
+            "sie gehoeren zu Notebook 03 und sind nicht im Teilnehmenden-ZIP.\n"
+            "Die Notebooks 01 und 02 funktionieren ohne sie.\n"
+        )
+
+    if fehlend_pflicht:
+        print(f"{len(fehlend_pflicht)} benoetigte Datensaetze fehlen.\n")
         print(DOWNLOAD_HINT)
-    else:
-        print("Alle Datensaetze gefunden.")
-    return not fehlend
+        return False
+
+    print("Alle benoetigten Datensaetze gefunden.")
+    return True

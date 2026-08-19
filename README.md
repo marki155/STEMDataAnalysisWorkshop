@@ -84,31 +84,31 @@ cd STEMDataAnalysisWorkshop
 
 ## Schritt 3: Messdaten herunterladen
 
-Die Messdaten sind mehrere hundert Megabyte gross und liegen deshalb **nicht** im
-Repository. Du laedst sie einmalig separat herunter.
+Die Messdaten liegen **nicht** im Repository. Du laedst sie einmalig separat
+herunter - das ZIP ist 43 MB gross.
 
-1. Daten-ZIP herunterladen: **<HIER DEN DOWNLOAD-LINK EINTRAGEN>**
+1. Daten-ZIP herunterladen (43 MB, entpackt 152 MB): **<HIER DEN DOWNLOAD-LINK EINTRAGEN>**
 2. Entpacken.
-3. Die Ordner `nanopore` und `praktikum` so ablegen, dass es am Ende **genau so** aussieht:
+3. Den Ordner `nanopore` so ablegen, dass es am Ende **genau so** aussieht:
 
 ```
 STEMDataAnalysisWorkshop/
 ├── data/
-│   ├── nanopore/
-│   │   ├── EELS Spectrum Image (high-loss).dm4
-│   │   ├── EELS Spectrum Image (low-loss).dm4
-│   │   ├── EDS Spectrum Image.dm4
-│   │   ├── ADF Image.dm4
-│   │   ├── ADF Image (SI Survey).dm4
-│   │   └── Si Standards/
-│   └── praktikum/
-│       ├── EELS HL SI.dm4
-│       ├── EELS LL SI.dm4
-│       └── JEOL Image.dm4
+│   └── nanopore/
+│       ├── EELS Spectrum Image (high-loss).dm4
+│       ├── EELS Spectrum Image (low-loss).dm4
+│       ├── EDS Spectrum Image.dm4
+│       ├── ADF Image.dm4
+│       ├── ADF Image (SI Survey).dm4
+│       └── Si Standards/
 ├── notebooks/
 ├── pixi.toml
 └── README.md
 ```
+
+> Notebook 03 braucht einen zweiten Datensatz (`data/praktikum/`), der **nicht**
+> im ZIP ist. `pixi run check` meldet ihn als "optional, fehlt" - das ist so
+> gewollt und kein Fehler.
 
 > **Der haeufigste Fehler ist ein Ordner zu viel** - also `data/messdaten/nanopore/...`
 > statt `data/nanopore/...`. Die Notebooks finden die Dateien meistens auch dann noch,
@@ -154,7 +154,7 @@ JupyterLab oeffnet sich im Browser. Arbeite die Notebooks in dieser Reihenfolge 
 | `00_setup_check.ipynb` | Prueft Installation, interaktive Plots und Bedienelemente |
 | `01_EELS_modeling.ipynb` | EELS: ausrichten, Untergrund, Kantenmodell, Feinstruktur |
 | `02_EDX_modeling.ipynb` | EDX: Linienauswahl, Modellfit, Untergrundfenster |
-| `03_EELS_praktikum_auswertung.ipynb` | EELS am Praktikumsdatensatz (6 Elemente) |
+| `03_EELS_praktikum_auswertung.ipynb` | EELS an einer Lamelle, Ca-Speziation *(braucht Zusatzdaten, siehe unten)* |
 
 **Starte die Notebooks immer ueber `pixi run lab`.** Wenn du JupyterLab anders
 startest (z.B. ein systemweit installiertes Jupyter), benutzt es das falsche Python
@@ -270,7 +270,24 @@ data/                Messdaten, per .gitignore ausgeschlossen
 
 Festgeschrieben in `pixi.lock` fuer `linux-64`, `win-64`, `osx-64` und `osx-arm64`:
 HyperSpy 2.4.0, eXSpy 0.3.2, RosettaSciIO 0.14.0, NumPy 2.4.6, SciPy 1.18.0,
-Matplotlib 3.11.1, Python 3.12.
+Matplotlib 3.10.9, Python 3.12.
+
+**Matplotlib ist bewusst auf `<3.11` gepinnt.** HyperSpy 2.4.0 uebergibt
+Marker-Farben in einem Format, das Matplotlib 3.11 elementweise zerlegt; der
+Aufruf `plot(background_windows=...)` in Notebook 02 stirbt dann mit
+`ValueError: Invalid RGBA argument`. Getestet: mit 3.10.9 laeuft er durch.
+Den Pin erst loesen, wenn ein HyperSpy-Release das behoben hat - und dann
+Notebook 02 wirklich einmal durchlaufen lassen.
+
+### Datensaetze
+
+| Ordner | Groesse | Wofuer | Im Teilnehmenden-ZIP |
+| --- | --- | --- | --- |
+| `data/nanopore/` | 152 MB (ZIP: 43 MB) | Notebook 01 + 02 | ja |
+| `data/praktikum/` | ~320 MB | Notebook 03 (Lamelle, Ca-Referenzen) | nein |
+
+In `notebooks/workshop_data.py` regelt das Set `OPTIONAL`, welche Datensaetze
+fehlen duerfen, ohne dass `pixi run check` einen Fehler meldet.
 
 Paket hinzufuegen:
 
