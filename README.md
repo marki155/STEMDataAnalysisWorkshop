@@ -1,52 +1,53 @@
 # STEM Data Analysis Workshop
 
-EELS- und EDX-Auswertung von STEM-Spektrenbildern mit [HyperSpy](https://hyperspy.org)
-und [eXSpy](https://hyperspy.org/exspy/).
+EELS and EDX analysis of STEM spectrum images with [HyperSpy](https://hyperspy.org)
+and [eXSpy](https://hyperspy.org/exspy/).
 
-Diese Anleitung setzt **keine Python-Kenntnisse** voraus. Wenn du sie von oben nach
-unten abarbeitest, hast du in etwa 10 Minuten eine lauffaehige Umgebung -
-unter Windows, macOS und Linux gleichermassen.
-
----
-
-## Was du installierst (und was nicht)
-
-Du installierst **ein einziges Programm**: `pixi`. Alles andere - Python selbst,
-HyperSpy, alle Bibliotheken - holt pixi anschliessend automatisch in *exakt* den
-Versionen, die in `pixi.lock` festgeschrieben sind.
-
-Das bedeutet:
-
-- **Du brauchst kein Python vorinstalliert.** Auch kein Anaconda, kein Miniconda.
-- **Es wird nichts an deinem System veraendert.** Alles landet im Projektordner
-  unter `.pixi/`. Zum Deinstallieren reicht es, den Ordner zu loeschen.
-- **Alle Teilnehmenden haben dieselben Versionen.** Kein "bei mir laeuft's aber".
+These instructions assume **no Python knowledge**. Work through them top to bottom
+and you will have a working environment in about 10 minutes - equally on Windows,
+macOS and Linux.
 
 ---
 
-## Schritt 1: pixi installieren
+## What you install (and what you don't)
 
-Such dir dein Betriebssystem heraus und fuehre **einen** Befehl aus.
+You install **one single program**: `pixi`. Everything else - Python itself,
+HyperSpy, all libraries - pixi then fetches automatically, in *exactly* the
+versions pinned in `pixi.lock`.
+
+That means:
+
+- **You do not need Python installed.** No Anaconda, no Miniconda either.
+- **Nothing on your system is changed.** Everything lands in the project folder
+  under `.pixi/`. To uninstall, delete that folder.
+- **Everyone gets identical versions.** No more "but it works on my machine".
+
+---
+
+## Step 1: install pixi
+
+Find your operating system and run **one** command.
 
 ### Windows
 
-PowerShell oeffnen (Startmenue -> "PowerShell" tippen -> Enter) und eingeben:
+Open PowerShell (Start menu -> type "PowerShell" -> Enter) and run:
 
 ```powershell
 powershell -ExecutionPolicy ByPass -c "irm -useb https://pixi.sh/install.ps1 | iex"
 ```
 
-**Danach PowerShell schliessen und neu oeffnen** - sonst kennt Windows den Befehl `pixi` noch nicht.
+**Then close PowerShell and open it again** - otherwise Windows does not yet know
+the `pixi` command.
 
 ### macOS
 
-Terminal oeffnen (Cmd+Leertaste -> "Terminal" -> Enter) und eingeben:
+Open Terminal (Cmd+Space -> "Terminal" -> Enter) and run:
 
 ```bash
 curl -fsSL https://pixi.sh/install.sh | sh
 ```
 
-**Danach Terminal schliessen und neu oeffnen.**
+**Then close the terminal and open it again.**
 
 ### Linux
 
@@ -54,42 +55,41 @@ curl -fsSL https://pixi.sh/install.sh | sh
 curl -fsSL https://pixi.sh/install.sh | sh
 ```
 
-**Danach Terminal schliessen und neu oeffnen.**
+**Then close the terminal and open it again.**
 
-### Hat es geklappt?
+### Did it work?
 
 ```bash
 pixi --version
 ```
 
-Wenn eine Versionsnummer erscheint: weiter mit Schritt 2.
-Wenn "Befehl nicht gefunden" erscheint: Terminal wirklich neu geoeffnet? Falls ja,
-siehe [Wenn etwas nicht funktioniert](#wenn-etwas-nicht-funktioniert).
+A version number means you can go to step 2. "Command not found" means: did you
+really open a new terminal? If so, see [When something goes wrong](#when-something-goes-wrong).
 
 ---
 
-## Schritt 2: Projekt herunterladen
+## Step 2: get the project
 
-**Mit Git** (empfohlen, weil du spaeter Korrekturen mit `git pull` nachziehen kannst):
+**With Git** (recommended, so you can pull later corrections with `git pull`):
 
 ```bash
 git clone <REPO-URL>
 cd STEMDataAnalysisWorkshop
 ```
 
-**Ohne Git:** Auf der GitHub-Seite auf den gruenen Knopf **Code** klicken ->
-**Download ZIP** -> entpacken -> im Terminal in den entpackten Ordner wechseln.
+**Without Git:** on the GitHub page click the green **Code** button ->
+**Download ZIP** -> unpack it -> `cd` into the unpacked folder in a terminal.
 
 ---
 
-## Schritt 3: Messdaten herunterladen
+## Step 3: get the measurement data
 
-Die Messdaten liegen **nicht** im Repository. Du laedst sie einmalig separat
-herunter - das ZIP ist 43 MB gross.
+The measurement data is **not** in the repository. You download it once,
+separately - the ZIP is 43 MB.
 
-1. Daten-ZIP herunterladen (43 MB, entpackt 152 MB): **<HIER DEN DOWNLOAD-LINK EINTRAGEN>**
-2. Entpacken.
-3. Den Ordner `nanopore` so ablegen, dass es am Ende **genau so** aussieht:
+1. Download the data ZIP (43 MB, 152 MB unpacked): **<PUT THE DOWNLOAD LINK HERE>**
+2. Unpack it.
+3. Place the `nanopore` folder so that it ends up looking **exactly** like this:
 
 ```
 STEMDataAnalysisWorkshop/
@@ -106,71 +106,69 @@ STEMDataAnalysisWorkshop/
 └── README.md
 ```
 
-> Notebook 03 braucht einen zweiten Datensatz (`data/praktikum/`), der **nicht**
-> im ZIP ist. `pixi run check` meldet ihn als "optional, fehlt" - das ist so
-> gewollt und kein Fehler.
+> Notebook 03 needs a second dataset (`data/lamella/`) that is **not** in the ZIP.
+> `pixi run check` reports it as "missing (optional)" - that is intended, not an error.
 
-> **Der haeufigste Fehler ist ein Ordner zu viel** - also `data/messdaten/nanopore/...`
-> statt `data/nanopore/...`. Die Notebooks finden die Dateien meistens auch dann noch,
-> aber Schritt 4 sagt dir sicherheitshalber genau, was es wo gefunden hat.
+> **The most common mistake is one folder level too many** - i.e.
+> `data/measurements/nanopore/...` instead of `data/nanopore/...`. The notebooks
+> usually still find the files, but step 4 will tell you exactly what it found where.
 
 ---
 
-## Schritt 4: Umgebung einrichten und pruefen
+## Step 4: set up and check the environment
 
-Im Projektordner:
+In the project folder:
 
 ```bash
 pixi run check
 ```
 
-Beim **ersten** Aufruf laedt pixi Python und alle Bibliotheken herunter - das dauert
-je nach Internetverbindung ein paar Minuten und braucht rund 2 GB Platz. Danach geht
-es sofort.
+The **first** call makes pixi download Python and every library - a few minutes
+depending on your connection, and about 2 GB of disk. After that it is instant.
 
-Der Befehl prueft der Reihe nach:
+The command checks, in order:
 
-1. sind alle Pakete da (mit Versionsnummern),
-2. koennen `.dm3`/`.dm4`-Dateien gelesen werden,
-3. kennt HyperSpy die EELS- und EDX-Signaltypen,
-4. ist die GOSH-Datenbank da (42 MB, wird einmalig geladen - **mach das vor dem
-   Workshop**, nicht wenn zwanzig Leute gleichzeitig im WLAN haengen),
-5. liegen alle Messdaten am richtigen Ort.
+1. are all packages present (with version numbers),
+2. can `.dm3`/`.dm4` files be read,
+3. does HyperSpy know the EELS and EDX signal types,
+4. is the GOSH database present (42 MB, downloaded once - **do this before the
+   workshop**, not while twenty people share the Wi-Fi),
+5. is the measurement data in the right place.
 
-Am Ende steht entweder `Alles bereit.` oder eine Liste dessen, was noch fehlt.
+At the end you get either `Everything ready.` or a list of what is still missing.
 
 ---
 
-## Schritt 5: Loslegen
+## Step 5: get going
 
 ```bash
 pixi run lab
 ```
 
-JupyterLab oeffnet sich im Browser. Arbeite die Notebooks in dieser Reihenfolge durch:
+JupyterLab opens in your browser. Work through the notebooks in this order:
 
-| Notebook | Inhalt |
+| Notebook | Contents |
 | --- | --- |
-| `00_setup_check.ipynb` | Prueft Installation, interaktive Plots und Bedienelemente |
-| `01_EELS_modeling.ipynb` | EELS: ausrichten, Untergrund, Kantenmodell, Feinstruktur |
-| `02_EDX_modeling.ipynb` | EDX: Linienauswahl, Modellfit, Untergrundfenster |
-| `03_EELS_praktikum_auswertung.ipynb` | EELS an einer Lamelle, Ca-Speziation *(braucht Zusatzdaten, siehe unten)* |
+| `00_setup_check.ipynb` | Checks installation, interactive plots and widgets |
+| `01_EELS_modeling.ipynb` | EELS: align, background, edge model, fine structure |
+| `02_EDX_modeling.ipynb` | EDX: line selection, model fit, background windows |
+| `03_EELS_lamella_analysis.ipynb` | EELS on a lamella, Ca speciation *(needs extra data, see below)* |
 
-**Starte die Notebooks immer ueber `pixi run lab`.** Wenn du JupyterLab anders
-startest (z.B. ein systemweit installiertes Jupyter), benutzt es das falsche Python
-und keines der Pakete ist da.
+**Always start the notebooks through `pixi run lab`.** If you start JupyterLab any
+other way (a system-wide Jupyter, say), it uses the wrong Python and none of the
+packages are there.
 
 ---
 
-## Wenn etwas nicht funktioniert
+## When something goes wrong
 
 <details>
-<summary><b>"pixi: Befehl nicht gefunden" / "pixi is not recognized"</b></summary>
+<summary><b>"pixi: command not found" / "pixi is not recognized"</b></summary>
 
-Terminal bzw. PowerShell nach der Installation **komplett schliessen und neu oeffnen**.
-Der Installer traegt pixi in den Suchpfad ein, das wirkt erst in einer neuen Sitzung.
+**Close and reopen** the terminal or PowerShell after installing. The installer adds
+pixi to your search path, and that only takes effect in a new session.
 
-Hilft das nicht, ruf pixi mit vollem Pfad auf:
+If that does not help, call pixi by its full path:
 
 - Windows: `%USERPROFILE%\.pixi\bin\pixi.exe --version`
 - macOS/Linux: `~/.pixi/bin/pixi --version`
@@ -178,50 +176,50 @@ Hilft das nicht, ruf pixi mit vollem Pfad auf:
 </details>
 
 <details>
-<summary><b>Plots bleiben leer oder es erscheint nur ein grauer Kasten</b></summary>
+<summary><b>Plots stay blank, or you only get a grey box</b></summary>
 
-Das interaktive Matplotlib-Backend (`ipympl`) laeuft nicht. Ersetze in der obersten
-Codezelle des Notebooks
+The interactive Matplotlib backend (`ipympl`) is not working. In the top code cell
+of the notebook, replace
 
 ```python
 %matplotlib widget
 ```
 
-durch
+with
 
 ```python
 %matplotlib inline
 ```
 
-und starte den Kernel neu (Menue **Kernel -> Restart Kernel and Run All Cells**).
-Die Plots sind dann statisch, aber inhaltlich identisch.
+and restart the kernel (menu **Kernel -> Restart Kernel and Run All Cells**). Plots
+are then static, but identical in content.
 
 </details>
 
 <details>
-<summary><b><code>m.gui()</code> zeigt nur Text statt Schiebereglern</b></summary>
+<summary><b><code>m.gui()</code> shows only text instead of sliders</b></summary>
 
-Kein Problem: unter jeder `m.gui()`-Zelle steht eine **Variante B**, die dasselbe
-per Code macht. Benutze die.
+No problem: below every `m.gui()` cell there is a **Variant B** that does the same
+thing in code. Use that one.
 
 </details>
 
 <details>
 <summary><b><code>ModuleNotFoundError: No module named 'hyperspy'</code></b></summary>
 
-Du hast JupyterLab nicht ueber `pixi run lab` gestartet. Schliesse es und starte es
-mit diesem Befehl neu.
+You did not start JupyterLab through `pixi run lab`. Close it and restart with that
+command.
 
 </details>
 
 <details>
-<summary><b><code>FileNotFoundError</code> beim Laden der Daten</b></summary>
+<summary><b><code>FileNotFoundError</code> when loading data</b></summary>
 
-Die Fehlermeldung sagt dir, welcher Pfad erwartet wurde und was stattdessen in `data/`
-liegt. Meistens ist beim Entpacken eine Ordnerebene zu viel entstanden - vergleiche
-mit dem Ordnerbaum in Schritt 3.
+The error message tells you which path was expected and what is in `data/` instead.
+Usually one folder level too many appeared while unpacking - compare against the
+tree in step 3.
 
-Zum Nachschauen, was gefunden wird:
+To see what is found:
 
 ```bash
 pixi run python -c "import sys; sys.path.insert(0,'notebooks'); import workshop_data; workshop_data.status()"
@@ -230,92 +228,97 @@ pixi run python -c "import sys; sys.path.insert(0,'notebooks'); import workshop_
 </details>
 
 <details>
-<summary><b>Der Fit laeuft ewig</b></summary>
+<summary><b>The fit takes forever</b></summary>
 
-`multifit` fittet jeden Bildpunkt einzeln. Erhoehe den `rebin`-Faktor, z.B. von
-`scale=[2, 2, 1]` auf `[4, 4, 1]` - das viertelt die Zahl der Bildpunkte.
+`multifit` fits every pixel separately. Raise the `rebin` factor, e.g. from
+`scale=[2, 2, 1]` to `[4, 4, 1]` - that quarters the number of pixels.
 
 </details>
 
 <details>
-<summary><b>Alles auf Anfang</b></summary>
+<summary><b>Start over from scratch</b></summary>
 
 ```bash
 pixi clean
 pixi install
 ```
 
-Loescht die Umgebung und baut sie aus `pixi.lock` neu auf. Deine Notebooks und Daten
-bleiben unangetastet.
+Deletes the environment and rebuilds it from `pixi.lock`. Your notebooks and data
+are untouched.
 
 </details>
 
 ---
 
-## Fuer Betreuende
+## For instructors
 
-### Aufbau
+### Layout
 
 ```
-pixi.toml            Paketliste (von Hand gepflegt)
-pixi.lock            exakte Versionen aller Pakete, alle 4 Plattformen - NICHT von Hand aendern
-check_setup.py       Setup-Pruefung, auch als 'pixi run check'
+pixi.toml            package list (maintained by hand)
+pixi.lock            exact versions of every package, all 4 platforms - do NOT edit by hand
+check_setup.py       setup check, also available as 'pixi run check'
 notebooks/
-  workshop_data.py   plattformunabhaengige Datensuche mit brauchbaren Fehlermeldungen
-  0*.ipynb           die Workshop-Notebooks
-data/                Messdaten, per .gitignore ausgeschlossen
+  workshop_data.py   OS-independent data lookup with usable error messages
+  0*.ipynb           the workshop notebooks
+data/                measurement data, excluded via .gitignore
 ```
 
-### Versionen
+### Versions
 
-Festgeschrieben in `pixi.lock` fuer `linux-64`, `win-64`, `osx-64` und `osx-arm64`:
+Pinned in `pixi.lock` for `linux-64`, `win-64`, `osx-64` and `osx-arm64`:
 HyperSpy 2.4.0, eXSpy 0.3.2, RosettaSciIO 0.14.0, NumPy 2.4.6, SciPy 1.18.0,
 Matplotlib 3.10.9, Python 3.12.
 
-**Matplotlib ist bewusst auf `<3.11` gepinnt.** HyperSpy 2.4.0 uebergibt
-Marker-Farben in einem Format, das Matplotlib 3.11 elementweise zerlegt; der
-Aufruf `plot(background_windows=...)` in Notebook 02 stirbt dann mit
-`ValueError: Invalid RGBA argument`. Getestet: mit 3.10.9 laeuft er durch.
-Den Pin erst loesen, wenn ein HyperSpy-Release das behoben hat - und dann
-Notebook 02 wirklich einmal durchlaufen lassen.
+**Matplotlib is deliberately pinned to `<3.11`.** HyperSpy 2.4.0 passes marker
+colours in a form that Matplotlib 3.11 takes apart element by element; the call
+`plot(background_windows=...)` in notebook 02 then dies with
+`ValueError: Invalid RGBA argument`. Verified: it runs with 3.10.9. Only lift the
+pin once a HyperSpy release has fixed this - and then actually run notebook 02
+once end to end.
 
-### Datensaetze
+### Datasets
 
-| Ordner | Groesse | Wofuer | Im Teilnehmenden-ZIP |
+| Folder | Size | Used by | In the participant ZIP |
 | --- | --- | --- | --- |
-| `data/nanopore/` | 152 MB (ZIP: 43 MB) | Notebook 01 + 02 | ja |
-| `data/praktikum/` | ~320 MB | Notebook 03 (Lamelle, Ca-Referenzen) | nein |
+| `data/nanopore/` | 152 MB (ZIP: 43 MB) | notebooks 01 + 02 | yes |
+| `data/lamella/` | ~320 MB | notebook 03 (lamella, Ca references) | no |
 
-In `notebooks/workshop_data.py` regelt das Set `OPTIONAL`, welche Datensaetze
-fehlen duerfen, ohne dass `pixi run check` einen Fehler meldet.
+The `OPTIONAL` set in `notebooks/workshop_data.py` controls which datasets may be
+missing without `pixi run check` reporting an error.
 
-Paket hinzufuegen:
+### Notes on notebook 03
 
-```bash
-pixi add <paketname>     # aktualisiert pixi.toml und pixi.lock
-```
+The lamella dataset covers 138-650 eV. Ga, W and Pt - which the original notebook
+listed - have no edges in that range at all (their nearest are at 1115, 1809 and
+2122 eV), and exspy dropped them silently. The elements actually measurable are
+Si, S, C, Ca and O.
 
-**`pixi.lock` gehoert mit ins Git-Repository** - sie ist der Grund, warum alle
-dieselbe Umgebung bekommen.
+The fine structure is fitted with the six Ca references rather than the Si ones,
+which only overlap this data by about a third. In a test run the Ca signal came out
+confined to roughly 5% of the pixels as a coherent band at the top edge of the field
+of view, dominated by CaSO4 - consistent with the S edges at 165 and 229 eV in the
+same data. Above 360 eV the fit deviates visibly; six references with `shift` held
+fixed cannot capture the shape there. Good enough for teaching, not for publication.
 
-### Neue Datensaetze einbinden
+### Adding new datasets
 
-In `notebooks/workshop_data.py` das Dictionary `DATASETS` erweitern:
+Extend the `DATASETS` dictionary in `notebooks/workshop_data.py`:
 
 ```python
 DATASETS = {
-    "mein_datensatz": "unterordner/Meine Datei.dm4",
+    "my_dataset": "subfolder/My File.dm4",
     ...
 }
 ```
 
-Danach im Notebook `load("mein_datensatz")`. Nie feste Pfade ins Notebook schreiben -
-die brechen auf dem naechsten Rechner.
+Then use `load("my_dataset")` in the notebook. Never write fixed paths into a
+notebook - they break on the next machine.
 
-### Vor der Verteilung
+### Before distributing
 
-Notebook-Ausgaben leeren, bevor committet wird - sonst wachsen die Dateien auf
-Megabytegroesse und die Diffs werden unbrauchbar:
+Clear the notebook outputs before committing, otherwise the files grow to megabytes
+and the diffs become useless:
 
 ```bash
 pixi run jupyter nbconvert --clear-output --inplace notebooks/*.ipynb

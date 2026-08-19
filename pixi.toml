@@ -1,6 +1,6 @@
 [workspace]
 name = "stem-data-analysis-workshop"
-description = "EELS- und EDX-Auswertung mit HyperSpy - Workshop-Umgebung"
+description = "EELS and EDX analysis with HyperSpy - workshop environment"
 channels = ["conda-forge"]
 platforms = ["linux-64", "win-64", "osx-64", "osx-arm64"]
 
@@ -11,9 +11,9 @@ exspy = ">=0.3"
 hyperspy-gui-ipywidgets = ">=2.0"
 numpy = ">=1.26"
 scipy = ">=1.11"
-# <3.11: HyperSpy 2.4.0 uebergibt Marker-Farben in einem Format, das
-# matplotlib 3.11 elementweise zerlegt -> "Invalid RGBA argument".
-# Betrifft u.a. plot(background_windows=...) in Notebook 02.
+# <3.11: HyperSpy 2.4.0 passes marker colours in a form that matplotlib 3.11
+# takes apart element by element -> "Invalid RGBA argument".
+# Affects plot(background_windows=...) in notebook 02, among others.
 matplotlib-base = ">=3.8,<3.11"
 ipympl = ">=0.9"
 jupyterlab = ">=4.2"
@@ -21,5 +21,5 @@ ipykernel = "*"
 pooch = "*"
 
 [tasks]
-lab = { cmd = "jupyter lab", description = "JupyterLab starten" }
-check = { cmd = "python check_setup.py", description = "Installation pruefen" }
+lab = { cmd = "jupyter lab", description = "Start JupyterLab" }
+check = { cmd = "python check_setup.py", description = "Check the installation" }

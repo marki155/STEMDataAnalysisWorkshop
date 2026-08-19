@@ -1,6 +1,6 @@
-"""Prueft vor dem Workshop, ob alles bereit ist.
+"""Check before the workshop that everything is ready.
 
-Aufruf:   pixi run check
+Run with:   pixi run check
 """
 
 import sys
@@ -12,20 +12,20 @@ warnings.filterwarnings("ignore")
 PROJECT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_DIR / "notebooks"))
 
-probleme = []
+problems = []
 
 
-def abschnitt(titel):
+def section(title):
     print()
-    print(titel)
-    print("-" * len(titel))
+    print(title)
+    print("-" * len(title))
 
 
 print("=" * 60)
-print("Setup-Check: STEM Data Analysis Workshop")
+print("Setup check: STEM Data Analysis Workshop")
 print("=" * 60)
 
-abschnitt("1. Pakete")
+section("1. Packages")
 try:
     import hyperspy
     import exspy
@@ -36,7 +36,7 @@ try:
     import ipympl
     import hyperspy_gui_ipywidgets
 
-    for name, modul in [
+    for name, module in [
         ("Python", None),
         ("hyperspy", hyperspy),
         ("exspy", exspy),
@@ -47,50 +47,50 @@ try:
         ("ipympl", ipympl),
         ("hyperspy-gui-ipywidgets", hyperspy_gui_ipywidgets),
     ]:
-        version = sys.version.split()[0] if modul is None else modul.__version__
+        version = sys.version.split()[0] if module is None else module.__version__
         print(f"  [ok] {name:24s} {version}")
-except ImportError as fehler:
-    print(f"  [FEHLER] {fehler}")
-    probleme.append(
-        "Ein Paket fehlt. Starte die Notebooks ueber 'pixi run lab', nicht ueber "
-        "ein anderes Python."
+except ImportError as error:
+    print(f"  [FAILED] {error}")
+    problems.append(
+        "A package is missing. Start the notebooks with 'pixi run lab', not with "
+        "some other Python."
     )
 
-abschnitt("2. dm3/dm4-Leser")
+section("2. dm3/dm4 reader")
 try:
     from rsciio import IO_PLUGINS
 
-    formate = {f.lower() for p in IO_PLUGINS for f in p.get("file_extensions", [])}
-    if {"dm3", "dm4"} <= formate:
-        print("  [ok] .dm3 und .dm4 koennen gelesen werden")
+    formats = {f.lower() for p in IO_PLUGINS for f in p.get("file_extensions", [])}
+    if {"dm3", "dm4"} <= formats:
+        print("  [ok] .dm3 and .dm4 can be read")
     else:
-        print("  [FEHLER] dm3/dm4-Leser nicht registriert")
-        probleme.append("RosettaSciIO kennt das Gatan-Format nicht.")
-except Exception as fehler:
-    print(f"  [FEHLER] {fehler}")
-    probleme.append(str(fehler))
+        print("  [FAILED] dm3/dm4 reader not registered")
+        problems.append("RosettaSciIO does not know the Gatan format.")
+except Exception as error:
+    print(f"  [FAILED] {error}")
+    problems.append(str(error))
 
-abschnitt("3. EELS-/EDX-Signaltypen (exspy)")
+section("3. EELS/EDX signal types (exspy)")
 try:
     import numpy as np
     import hyperspy.api as hs
-    import exspy  # noqa: F401  - registriert die Signaltypen
+    import exspy  # noqa: F401  - registers the signal types
 
-    for signaltyp, erwartet in [("EELS", "EELSSpectrum"), ("EDS_TEM", "EDSTEMSpectrum")]:
+    for signal_type, expected in [("EELS", "EELSSpectrum"), ("EDS_TEM", "EDSTEMSpectrum")]:
         s = hs.signals.Signal1D(np.zeros((2, 2, 50)))
-        s.set_signal_type(signaltyp)
-        if type(s).__name__ == erwartet:
-            print(f"  [ok] {signaltyp:8s} -> {erwartet}")
+        s.set_signal_type(signal_type)
+        if type(s).__name__ == expected:
+            print(f"  [ok] {signal_type:8s} -> {expected}")
         else:
-            print(f"  [FEHLER] {signaltyp} -> {type(s).__name__}, erwartet {erwartet}")
-            probleme.append(f"Signaltyp {signaltyp} wird nicht erkannt.")
-except Exception as fehler:
-    print(f"  [FEHLER] {fehler}")
-    probleme.append(str(fehler))
+            print(f"  [FAILED] {signal_type} -> {type(s).__name__}, expected {expected}")
+            problems.append(f"Signal type {signal_type} is not recognised.")
+except Exception as error:
+    print(f"  [FAILED] {error}")
+    problems.append(str(error))
 
-abschnitt("4. GOSH-Datenbank (fuer EELS-Kantenmodelle, ~42 MB)")
-print("  Wird beim ersten EELS-Modell aus dem Netz geladen und dauerhaft")
-print("  zwischengespeichert. Jetzt holen spart WLAN-Aerger im Workshop.")
+section("4. GOSH database (for EELS edge models, ~42 MB)")
+print("  Downloaded from Zenodo the first time an EELS model is built, then")
+print("  cached permanently. Fetching it now saves Wi-Fi trouble on the day.")
 try:
     import numpy as np
     import hyperspy.api as hs
@@ -106,27 +106,27 @@ try:
     )
     s.add_elements(["Si"])
     s.create_model(auto_background=False)
-    print("  [ok] GOSH-Datenbank ist lokal verfuegbar")
-except Exception as fehler:
-    print(f"  [WARNUNG] {type(fehler).__name__}: {fehler}")
-    print("  Ohne Internet funktionieren EELS-Kantenmodelle nicht.")
+    print("  [ok] GOSH database is available locally")
+except Exception as error:
+    print(f"  [WARNING] {type(error).__name__}: {error}")
+    print("  Without internet access, EELS edge models will not work.")
 
-abschnitt("5. Messdaten")
+section("5. Measurement data")
 try:
     import workshop_data
 
     if not workshop_data.status():
-        probleme.append("Es fehlen Messdaten (siehe oben).")
-except Exception as fehler:
-    print(f"  [FEHLER] {fehler}")
-    probleme.append(str(fehler))
+        problems.append("Measurement data is missing (see above).")
+except Exception as error:
+    print(f"  [FAILED] {error}")
+    problems.append(str(error))
 
 print()
 print("=" * 60)
-if probleme:
-    print(f"{len(probleme)} Punkt(e) offen:")
-    for p in probleme:
+if problems:
+    print(f"{len(problems)} item(s) still open:")
+    for p in problems:
         print(f"  - {p}")
     sys.exit(1)
-print("Alles bereit. Starte den Workshop mit:  pixi run lab")
+print("Everything ready. Start the workshop with:  pixi run lab")
 print("=" * 60)

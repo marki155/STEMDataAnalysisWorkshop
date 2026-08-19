@@ -1,8 +1,8 @@
 # pixi
 .pixi/
 
-# Messdaten - werden separat heruntergeladen, nicht ins Repo!
-# Der Ordner selbst bleibt (mit Anleitung), sein Inhalt nicht.
+# Measurement data - downloaded separately, never committed!
+# The folder itself stays (with instructions), its contents do not.
 data/*
 !data/README.md
 *.dm3
@@ -23,6 +23,6 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Lokale Rohdatenkopie (17 GB, gehoert nicht ins Repo)
+# Local copy of the raw data (17 GB, does not belong in the repo)
 eels spectra/
 *.msa

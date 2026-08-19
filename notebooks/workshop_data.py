@@ -1,90 +1,88 @@
-"""Findet die Messdaten des Workshops - plattformunabhaengig und fehlertolerant.
+"""Locate the workshop measurement data - cross-platform and fault-tolerant.
 
-Die Notebooks laden Daten nie ueber einen festen Pfad, sondern so::
+The notebooks never hard-code a path. They do this instead::
 
     from workshop_data import load
     signal = load("eels_highloss")
 
-Damit laufen dieselben Notebooks unveraendert unter Windows, macOS und Linux.
-Liegen die Daten falsch, sagt die Fehlermeldung konkret, was wo erwartet wurde
-und was stattdessen gefunden wurde.
+That way the same notebooks run unchanged on Windows, macOS and Linux.
+If the data sits in the wrong place, the error message states exactly what was
+expected where, and what was found instead.
 """
 
 from pathlib import Path
 
-# Wo die Daten liegen sollen: <Projektordner>/data/
-# __file__ ist notebooks/workshop_data.py -> zwei Ebenen hoch ist der Projektordner.
+# Where the data belongs: <project folder>/data/
+# __file__ is notebooks/workshop_data.py, so two levels up is the project folder.
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_DIR / "data"
 
-# Logischer Name -> Pfad unterhalb von data/, so wie das ZIP entpackt wird.
+# Logical name -> path below data/, matching how the ZIP unpacks.
 DATASETS = {
-    # Nanopore-Datensatz (EELS + EDX Modeling)
+    # Nanopore dataset (EELS + EDX modelling)
     "eels_highloss": "nanopore/EELS Spectrum Image (high-loss).dm4",
     "eels_lowloss": "nanopore/EELS Spectrum Image (low-loss).dm4",
     "edx_si": "nanopore/EDS Spectrum Image.dm4",
     "adf": "nanopore/ADF Image.dm4",
     "adf_survey": "nanopore/ADF Image (SI Survey).dm4",
-    "si_standards": "nanopore/Si Standards",  # Ordner mit Referenzspektren
-    # Praktikums-Datensatz (lamella) - optional, siehe OPTIONAL unten
-    "praktikum_eels_highloss": "praktikum/EELS HL SI.dm4",
-    "praktikum_eels_lowloss": "praktikum/EELS LL SI.dm4",
-    "praktikum_adf": "praktikum/JEOL Image.dm4",
-    "ca_standards": "praktikum/Ca Standards",  # Ordner mit Ca-Referenzspektren
+    "si_standards": "nanopore/Si Standards",  # folder of reference spectra
+    # Lamella dataset - optional, see OPTIONAL below
+    "lamella_eels_highloss": "lamella/EELS HL SI.dm4",
+    "lamella_eels_lowloss": "lamella/EELS LL SI.dm4",
+    "lamella_adf": "lamella/JEOL Image.dm4",
+    "ca_standards": "lamella/Ca Standards",  # folder of Ca reference spectra
 }
 
-# Diese Datensaetze sind nicht im Teilnehmenden-ZIP enthalten (nur 'nanopore').
-# Sie werden ausschliesslich von Notebook 03 gebraucht. Fehlen sie, ist das
-# kein Fehler - 'pixi run check' meldet sie nur als Hinweis.
+# These datasets are not part of the participant ZIP (which holds 'nanopore' only).
+# Only notebook 03 needs them. If they are missing that is not an error -
+# 'pixi run check' reports them as a note.
 OPTIONAL = {
-    "praktikum_eels_highloss",
-    "praktikum_eels_lowloss",
-    "praktikum_adf",
+    "lamella_eels_highloss",
+    "lamella_eels_lowloss",
+    "lamella_adf",
     "ca_standards",
 }
 
 DOWNLOAD_HINT = (
-    "So behebst du das:\n"
-    "  1. Lade das Daten-ZIP herunter (Link steht in der README).\n"
-    "  2. Entpacke es so, dass der Ordner 'nanopore' DIREKT\n"
-    f"     in diesem Ordner liegt:\n     {DATA_DIR}\n"
-    "  3. Fuehre diese Zelle erneut aus.\n\n"
-    "Haeufigster Fehler: ein Ordner zu viel, also\n"
-    "  data/messdaten/nanopore/...   statt   data/nanopore/...\n"
-    "(Das findet dieses Skript zwar meistens trotzdem - aber sauberer ist es so.)"
+    "How to fix this:\n"
+    "  1. Download the data ZIP (link is in the README).\n"
+    "  2. Unpack it so that the 'nanopore' folder sits DIRECTLY\n"
+    f"     inside this folder:\n     {DATA_DIR}\n"
+    "  3. Run this cell again.\n\n"
+    "Most common mistake: one folder level too many, i.e.\n"
+    "  data/measurements/nanopore/...   instead of   data/nanopore/...\n"
+    "(This script usually finds it anyway - but the clean layout is better.)"
 )
 
 
 def _describe_data_dir():
-    """Beschreibt lesbar, was gerade in data/ liegt - fuer Fehlermeldungen."""
+    """Readable description of what is currently in data/ - for error messages."""
     if not DATA_DIR.exists():
-        return f"Der Ordner 'data' existiert nicht:\n    {DATA_DIR}"
-    eintraege = sorted(p.name + ("/" if p.is_dir() else "") for p in DATA_DIR.iterdir())
-    if not eintraege:
-        return f"Der Ordner 'data' ist leer:\n    {DATA_DIR}"
-    gezeigt = eintraege[:15]
-    rest = f"\n    ... und {len(eintraege) - 15} weitere" if len(eintraege) > 15 else ""
-    return (
-        f"In {DATA_DIR} liegt aktuell:\n    " + "\n    ".join(gezeigt) + rest
-    )
+        return f"The 'data' folder does not exist:\n    {DATA_DIR}"
+    entries = sorted(p.name + ("/" if p.is_dir() else "") for p in DATA_DIR.iterdir())
+    if not entries:
+        return f"The 'data' folder is empty:\n    {DATA_DIR}"
+    shown = entries[:15]
+    rest = f"\n    ... and {len(entries) - 15} more" if len(entries) > 15 else ""
+    return f"{DATA_DIR} currently contains:\n    " + "\n    ".join(shown) + rest
 
 
-def _search_by_name(zielname):
-    """Sucht rekursiv nach dem Dateinamen - faengt falsch entpackte ZIPs ab."""
+def _search_by_name(target_name):
+    """Search recursively for the file name - catches badly unpacked ZIPs."""
     if not DATA_DIR.exists():
         return []
-    treffer = [p for p in DATA_DIR.rglob(zielname) if p.exists()]
-    # Kuerzeste Pfade zuerst: die am wenigsten verschachtelte Variante gewinnt.
-    return sorted(treffer, key=lambda p: len(p.parts))
+    hits = [p for p in DATA_DIR.rglob(target_name) if p.exists()]
+    # Shortest path first: the least deeply nested candidate wins.
+    return sorted(hits, key=lambda p: len(p.parts))
 
 
 def path(name):
-    """Gibt den Pfad zu einem Datensatz zurueck (ohne ihn zu laden).
+    """Return the path to a dataset (without loading it).
 
     Parameters
     ----------
     name : str
-        Logischer Name aus DATASETS, z.B. "eels_highloss".
+        Logical name from DATASETS, e.g. "eels_highloss".
 
     Returns
     -------
@@ -92,40 +90,40 @@ def path(name):
     """
     if name not in DATASETS:
         raise KeyError(
-            f"Unbekannter Datensatz {name!r}.\n"
-            f"Verfuegbar sind: {', '.join(sorted(DATASETS))}"
+            f"Unknown dataset {name!r}.\n"
+            f"Available: {', '.join(sorted(DATASETS))}"
         )
 
-    erwartet = DATA_DIR / DATASETS[name]
-    if erwartet.exists():
-        return erwartet
+    expected = DATA_DIR / DATASETS[name]
+    if expected.exists():
+        return expected
 
-    # Plan B: irgendwo unterhalb von data/ nach dem Dateinamen suchen.
-    zielname = Path(DATASETS[name]).name
-    treffer = _search_by_name(zielname)
-    if len(treffer) == 1:
-        return treffer[0]
-    if len(treffer) > 1:
-        liste = "\n    ".join(str(p) for p in treffer[:5])
+    # Plan B: search anywhere below data/ for the file name.
+    target_name = Path(DATASETS[name]).name
+    hits = _search_by_name(target_name)
+    if len(hits) == 1:
+        return hits[0]
+    if len(hits) > 1:
+        listing = "\n    ".join(str(p) for p in hits[:5])
         raise FileNotFoundError(
-            f"{zielname!r} kommt mehrfach unter data/ vor - ich weiss nicht, welche gemeint ist:\n"
-            f"    {liste}\n\n"
-            f"Loesche die Duplikate oder lege die Datei nach:\n    {erwartet}"
+            f"{target_name!r} occurs more than once below data/ - cannot tell which one is meant:\n"
+            f"    {listing}\n\n"
+            f"Delete the duplicates, or put the file at:\n    {expected}"
         )
 
     raise FileNotFoundError(
-        f"Datensatz {name!r} nicht gefunden.\n\n"
-        f"Erwartet wurde:\n    {erwartet}\n\n"
+        f"Dataset {name!r} not found.\n\n"
+        f"Expected at:\n    {expected}\n\n"
         f"{_describe_data_dir()}\n\n"
         f"{DOWNLOAD_HINT}"
     )
 
 
 def load(name, **kwargs):
-    """Laedt einen Datensatz mit HyperSpy.
+    """Load a dataset with HyperSpy.
 
-    Zusaetzliche Argumente (z.B. ``signal_type="EELS"``) werden an
-    ``hyperspy.api.load`` durchgereicht.
+    Extra arguments (e.g. ``signal_type="EELS"``) are passed straight through to
+    ``hyperspy.api.load``.
     """
     import hyperspy.api as hs
 
@@ -133,67 +131,67 @@ def load(name, **kwargs):
 
 
 def load_standards(name="si_standards", sigma=None):
-    """Laedt alle Referenzspektren aus einem Ordner als ``{Name: Signal}``.
+    """Load every reference spectrum in a folder as ``{name: signal}``.
 
     Parameters
     ----------
     name : str
-        Logischer Name eines Ordner-Datensatzes.
+        Logical name of a folder dataset.
     sigma : float, optional
-        Wenn gesetzt, wird jedes Spektrum mit einem Gauss dieser Breite
-        geglaettet (entlang der Energieachse).
+        If given, each spectrum is smoothed with a Gaussian of this width
+        (along the energy axis).
     """
     import hyperspy.api as hs
 
-    ordner = path(name)
-    if not ordner.is_dir():
-        raise NotADirectoryError(f"{ordner} ist kein Ordner.")
+    folder = path(name)
+    if not folder.is_dir():
+        raise NotADirectoryError(f"{folder} is not a folder.")
 
     standards = {}
-    for datei in sorted(ordner.iterdir()):
-        if not datei.is_file() or datei.name.startswith("."):
+    for file in sorted(folder.iterdir()):
+        if not file.is_file() or file.name.startswith("."):
             continue
         try:
-            s = hs.load(str(datei))
-        except Exception as fehler:  # z.B. eine README im Ordner
-            print(f"  uebersprungen: {datei.name} ({fehler})")
+            s = hs.load(str(file))
+        except Exception as error:  # e.g. a README sitting in the folder
+            print(f"  skipped: {file.name} ({error})")
             continue
         if sigma is not None:
             from scipy.ndimage import gaussian_filter1d
 
             s.data = gaussian_filter1d(s.data, sigma=sigma, axis=-1)
-        standards[datei.stem] = s
+        standards[file.stem] = s
 
     if not standards:
-        raise FileNotFoundError(f"Keine ladbaren Spektren in {ordner} gefunden.")
+        raise FileNotFoundError(f"No loadable spectra found in {folder}.")
     return standards
 
 
 def status():
-    """Zeigt an, welche Datensaetze gefunden werden - fuer den Setup-Check."""
-    print(f"Datenordner: {DATA_DIR}\n")
-    fehlend_pflicht, fehlend_optional = [], []
+    """Report which datasets can be found - used by the setup check."""
+    print(f"Data folder: {DATA_DIR}\n")
+    missing_required, missing_optional = [], []
     for name in sorted(DATASETS):
-        marke = " (optional)" if name in OPTIONAL else ""
+        tag = " (optional)" if name in OPTIONAL else ""
         try:
             p = path(name)
-            print(f"  [ok]     {name:26s} -> {p.relative_to(DATA_DIR)}")
+            print(f"  [ok]      {name:26s} -> {p.relative_to(DATA_DIR)}")
         except FileNotFoundError:
-            print(f"  [fehlt]  {name:26s}{marke}")
-            (fehlend_optional if name in OPTIONAL else fehlend_pflicht).append(name)
+            print(f"  [missing] {name:26s}{tag}")
+            (missing_optional if name in OPTIONAL else missing_required).append(name)
     print()
 
-    if fehlend_optional:
+    if missing_optional:
         print(
-            f"{len(fehlend_optional)} optionale Datensaetze fehlen. Das ist normal:\n"
-            "sie gehoeren zu Notebook 03 und sind nicht im Teilnehmenden-ZIP.\n"
-            "Die Notebooks 01 und 02 funktionieren ohne sie.\n"
+            f"{len(missing_optional)} optional datasets are missing. That is normal:\n"
+            "they belong to notebook 03 and are not part of the participant ZIP.\n"
+            "Notebooks 01 and 02 work without them.\n"
         )
 
-    if fehlend_pflicht:
-        print(f"{len(fehlend_pflicht)} benoetigte Datensaetze fehlen.\n")
+    if missing_required:
+        print(f"{len(missing_required)} required datasets are missing.\n")
         print(DOWNLOAD_HINT)
         return False
 
-    print("Alle benoetigten Datensaetze gefunden.")
+    print("All required datasets found.")
     return True

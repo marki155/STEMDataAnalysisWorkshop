@@ -1,15 +1,15 @@
-# Hier kommen die Messdaten hin
+# The measurement data goes here
 
-Dieser Ordner ist absichtlich leer. Die `.dm4`-Dateien sind mehrere hundert Megabyte
-gross und liegen deshalb nicht im Repository.
+This folder is intentionally empty. The `.dm4` files are hundreds of megabytes, so
+they are not kept in the repository.
 
-**Download-Link:** <HIER DEN DOWNLOAD-LINK EINTRAGEN>
+**Download link:** <PUT THE DOWNLOAD LINK HERE>
 
-Entpacke das ZIP so, dass der Ordner `nanopore` **direkt hier** liegt:
+Unpack the ZIP so that the `nanopore` folder sits **directly here**:
 
 ```
 data/
-├── README.md                 <- diese Datei
+├── README.md                 <- this file
 └── nanopore/
     ├── EELS Spectrum Image (high-loss).dm4
     ├── EELS Spectrum Image (low-loss).dm4
@@ -19,20 +19,20 @@ data/
     └── Si Standards/
 ```
 
-Das reicht fuer die Notebooks 00, 01 und 02.
+That is all you need for notebooks 00, 01 and 02.
 
-Notebook 03 braucht zusaetzlich `data/praktikum/` (Lamellen-Datensatz mit den
-Ca-Referenzspektren). Der ist nicht im ZIP - wenn er fehlt, ist das kein Fehler.
+Notebook 03 additionally needs `data/lamella/` (the lamella dataset with the Ca
+reference spectra). It is not in the ZIP - if it is missing, that is not an error.
 
-Nicht so (eine Ordnerebene zu viel - der haeufigste Fehler):
+Not like this (one folder level too many - the most common mistake):
 
 ```
 data/
-└── messdaten/
+└── measurements/
     └── nanopore/
 ```
 
-Pruefen, ob alles gefunden wird:
+To check that everything is found:
 
 ```bash
 pixi run check
