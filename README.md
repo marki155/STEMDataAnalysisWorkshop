@@ -149,7 +149,7 @@ JupyterLab opens in your browser. Work through the notebooks in this order:
 | `00_setup_check.ipynb` | Checks installation, interactive plots and widgets |
 | `01_EELS_modeling.ipynb` | EELS: align, background, edge model, fine structure |
 | `02_EDX_modeling.ipynb` | EDX: line selection, model fit, background windows |
-| `03_your_own_data.ipynb` | Template for your own measurements |
+| `03_phase_mapping.ipynb` | Separating Si / SiO2 / WS2 / C+Pt by EELS and EDX *(template - needs your data)* |
 
 **Always start the notebooks through `pixi run lab`.** If you start JupyterLab any
 other way (a system-wide Jupyter, say), it uses the wrong Python and none of the
@@ -257,6 +257,7 @@ pixi.lock            exact versions of every package, all 4 platforms - do NOT e
 check_setup.py       setup check, also available as 'pixi run check'
 notebooks/
   workshop_data.py   OS-independent data lookup with usable error messages
+  phase_analysis.py  elemental maps -> phase map, and the X-ray line overlap check
   0*.ipynb           the workshop notebooks
 data/                measurement data, excluded via .gitignore
 ```
@@ -282,6 +283,34 @@ once end to end.
 
 That is the only dataset the workshop ships with. `03_your_own_data.ipynb` is a
 template for measurements you add later.
+
+### Notebook 03: phase mapping
+
+Written for a sample with four phases - Si, SiO2, WS2 and a C+Pt cap - and mapped
+twice, once by EELS and once by EDX, because the two methods fail in different
+places. It is a **template**: the file paths are placeholders and it does not run
+until you point it at a measurement. The bonus section at the end is the exception
+and works with the workshop's own Si/SiO2 references.
+
+Two facts drive its design, both checked against eXSpy 0.3.2 rather than assumed:
+
+- **EELS cannot reach W or Pt below 1800 eV.** The lowest edges in the database are
+  W-M5 = 1809 eV and Pt-M5 = 2122 eV, so in an 80-600 eV window `add_elements`
+  silently drops both. EELS identifies WS2 through sulphur (S-L2,3 = 165 eV) and the
+  cap through carbon (C-K = 284 eV).
+- **EDX puts two free amplitudes 36 eV apart.** Si-Ka sits at 1.740 keV and W-Ma at
+  1.776 keV. `add_lines()` correctly picks the clean L lines at 200 kV, but
+  `create_model()` still builds the whole M family, and the M head is *not* tied to
+  the L head - so both amplitudes float under one 130 eV-wide peak. The notebook
+  detects this and ties the M family to the L family with a calibrated ratio.
+
+`phase_analysis.py` holds the parts that can be tested without a microscope: the
+line-overlap detector and the classification. It carries its own self-test against
+a layer stack whose answer is known:
+
+```bash
+pixi run python notebooks/phase_analysis.py
+```
 
 ### Adding your own measurements
 
