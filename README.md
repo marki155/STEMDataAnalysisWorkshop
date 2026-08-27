@@ -73,11 +73,11 @@ really open a new terminal? If so, see [When something goes wrong](#when-somethi
 **With Git** (recommended, so you can pull later corrections with `git pull`):
 
 ```bash
-git clone <REPO-URL>
+git clone https://github.com/marki155/STEMDataAnalysisWorkshop.git
 cd STEMDataAnalysisWorkshop
 ```
 
-**Without Git:** on the GitHub page click the green **Code** button ->
+**Without Git:** on the [GitHub page](https://github.com/marki155/STEMDataAnalysisWorkshop) click the green **Code** button ->
 **Download ZIP** -> unpack it -> `cd` into the unpacked folder in a terminal.
 
 ---
