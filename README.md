@@ -194,6 +194,31 @@ are then static, but identical in content.
 </details>
 
 <details>
+<summary><b>Only one plot appears where there should be two ("Figure 2" missing)</b></summary>
+
+`signal.plot()` on a spectrum image normally opens **two** figures: a navigator -
+the survey image you click on to pick a pixel - and the signal, the spectrum
+itself. With `%matplotlib widget`, JupyterLab sometimes attaches only one of them
+to the cell output, and the one that goes missing is usually "Figure 2", the
+spectrum.
+
+The notebooks avoid this by putting both panels into a single figure:
+
+```python
+hs.preferences.Plot.use_subfigure = True
+```
+
+That line sits in the import cell of notebooks 01, 02 and 03. If you write your
+own notebook, set it there too.
+
+Alternatives if you would rather keep two separate figures:
+
+- `signal.plot(navigator="slider")` - one figure plus sliders, no navigator image
+- `%matplotlib inline` - static plots, both always shown
+
+</details>
+
+<details>
 <summary><b><code>m.gui()</code> shows only text instead of sliders</b></summary>
 
 No problem: below every `m.gui()` cell there is a **Variant B** that does the same
