@@ -194,6 +194,98 @@ are then static, but identical in content.
 </details>
 
 <details>
+<summary><b>Nothing renders with <code>%matplotlib widget</code>, but <code>inline</code> and <code>qt</code> work</b></summary>
+
+If `%matplotlib inline` shows the plot and `%matplotlib qt` shows it in a separate
+window, then matplotlib and HyperSpy are fine - the interactive **widget** is not
+being rendered by JupyterLab. Work through this in order.
+
+**1. Reload the browser page properly.** Ctrl+Shift+R (Cmd+Shift+R on macOS).
+JupyterLab caches its extension bundle, and a stale cache is the most common cause.
+
+**2. Check which extensions are actually loaded:**
+
+```bash
+pixi run extensions
+```
+
+`jupyter-matplotlib` and `@jupyter-widgets/jupyterlab-manager` must both be listed
+as `enabled OK`, and they should come from the path inside `.pixi/envs/default`.
+If a second directory is listed - your own Jupyter installation, on Windows
+`%APPDATA%\jupyter\labextensions` - an older copy there can shadow the one pinned
+in this project. `pixi run lab` sets `JUPYTER_PREFER_ENV_PATH=1` to prevent that,
+so start JupyterLab that way and not with a system-wide `jupyter lab`.
+
+**3. Is it only plots, or all widgets?** Run `00_setup_check.ipynb`. Section 2
+tests an interactive plot, section 3 tests plain HyperSpy sliders.
+
+- Sliders appear, plot does not -> the problem is `ipympl` alone.
+- Neither appears -> the whole widget stack is not loading; see step 2.
+
+**4. If it stays broken, use `%matplotlib inline`.** Replace the first code cell of
+each notebook and restart the kernel. Everything in the workshop works; you lose
+zoom and the click-a-pixel navigator, nothing else. `m.gui()` is off by default
+anyway, and every interactive cell has a code variant next to it.
+
+</details>
+
+<details>
+<summary><b>A plot does not appear at all</b></summary>
+
+First find out whether the interactive backend is actually running. Put this in a
+cell and run it:
+
+```python
+import matplotlib, matplotlib.pyplot as plt
+print("backend    :", matplotlib.get_backend())
+print("interactive:", plt.isinteractive())
+print("figures    :", plt.get_fignums())
+```
+
+Expected inside a notebook: a backend whose name contains `widget`, `ipympl` or
+`nbagg` (matplotlib reports it as `widget` or as `module://ipympl.backend_nbagg`,
+depending on version), and `interactive: True`.
+
+- **Backend is something else** (`qtagg`, `agg`, ...): `%matplotlib widget` did not
+  take effect in this kernel. Restart the kernel and run the cells from the top.
+- **`interactive` is False**: figures are built but never shown. `plt.ion()` fixes
+  it for the session; a kernel restart fixes it properly.
+- **Backend and interactive are right but `figures` lists the figure anyway**: the
+  figure exists and the browser is not rendering it. Switch that notebook's first
+  cell to `%matplotlib inline` and restart the kernel. Plots are then static, but
+  they always appear.
+
+An exception in an earlier cell can leave the kernel in a state where this
+happens, so a restart is worth trying before anything else.
+
+</details>
+
+<details>
+<summary><b>Only one plot appears where there should be two ("Figure 2" missing)</b></summary>
+
+`signal.plot()` on a spectrum image normally opens **two** figures: a navigator -
+the survey image you click on to pick a pixel - and the signal, the spectrum
+itself. With `%matplotlib widget`, JupyterLab sometimes attaches only one of them
+to the cell output, and the one that goes missing is usually "Figure 2", the
+spectrum.
+
+The notebooks avoid this by putting both panels into a single figure:
+
+```python
+hs.preferences.Plot.use_subfigure = True
+```
+
+That line sits in the import cell of notebooks 01, 02 and 03. If you write your
+own notebook, set it there too.
+
+Alternatives if you would rather keep two separate figures:
+
+- `signal.plot(navigator="slider")` - one figure plus sliders, no navigator image
+- `%matplotlib inline` - static plots, both always shown
+
+</details>
+
+<details>
 <summary><b><code>m.gui()</code> shows only text instead of sliders</b></summary>
 
 No problem: below every `m.gui()` cell there is a **Variant B** that does the same
@@ -225,6 +317,34 @@ pixi run python -c "import sys; sys.path.insert(0,'notebooks'); import workshop_
 </details>
 
 <details>
+<summary><b><code>TraitError: Broken link ... the source value changed while updating the target</code></b></summary>
+
+This stops `multifit` part way through, usually with a line above it naming a
+model parameter, e.g. `<Parameter intensity of O_K component>`.
+
+**Cause:** an open `m.gui()` widget. It binds every model parameter to a slider.
+While fitting, the optimiser writes each parameter thousands of times per second;
+every value travels to the browser and comes back with float32 precision, so it
+differs in about the eighth digit. The binding sees the source change while it is
+updating the target and raises.
+
+**Fix:** re-run the cell that creates the model -
+
+```python
+m = signal_binned.create_model(auto_background=False)
+```
+
+A fresh model has no widget attached, and the fit runs. You do not need to restart
+the kernel.
+
+**Avoiding it:** every `m.gui()` cell in notebooks 01 and 03 is switched off by
+default (`SHOW_GUI = False`) for exactly this reason. If you turn one on, re-create
+the model before you fit. Variant B, which prints the same information as text, has
+no such problem.
+
+</details>
+
+<details>
 <summary><b>The fit takes forever</b></summary>
 
 `multifit` fits every pixel separately. Raise the `rebin` factor, e.g. from
@@ -252,7 +372,7 @@ are untouched.
 ### Layout
 
 ```
-pixi.toml            package list (maintained by hand)
+pixi.toml            package list and the pixi tasks (maintained by hand)
 pixi.lock            exact versions of every package, all 4 platforms - do NOT edit by hand
 check_setup.py       setup check, also available as 'pixi run check'
 notebooks/
@@ -261,6 +381,20 @@ notebooks/
   0*.ipynb           the workshop notebooks
 data/                measurement data, excluded via .gitignore
 ```
+
+### Tasks
+
+```bash
+pixi run check        # verify the installation and the data
+pixi run lab          # start JupyterLab
+pixi run extensions   # list the active JupyterLab extensions
+```
+
+`lab` and `extensions` set `JUPYTER_PREFER_ENV_PATH=1` so that JupyterLab loads the
+extensions pinned in this project rather than any the user happens to have in their
+own Jupyter directory. That matters for participants who already have a Jupyter
+installation: an older `jupyter-matplotlib` there can shadow this one and interactive
+plots then fail to render with no error message.
 
 ### Versions
 

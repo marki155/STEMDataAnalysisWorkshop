@@ -21,5 +21,12 @@ ipykernel = "*"
 pooch = "*"
 
 [tasks]
-lab = { cmd = "jupyter lab", description = "Start JupyterLab" }
+# JUPYTER_PREFER_ENV_PATH=1 makes JupyterLab load the extensions from THIS
+# environment before any the user already has installed elsewhere (on Windows
+# that is %APPDATA%\jupyter\labextensions). Without it, an older
+# jupyter-matplotlib or widget manager sitting in the user directory can shadow
+# the one pinned here, and interactive plots then silently fail to render while
+# everything else keeps working.
+lab = { cmd = "jupyter lab", description = "Start JupyterLab", env = { JUPYTER_PREFER_ENV_PATH = "1" } }
 check = { cmd = "python check_setup.py", description = "Check the installation" }
+extensions = { cmd = "jupyter labextension list", description = "Show which JupyterLab extensions are active", env = { JUPYTER_PREFER_ENV_PATH = "1" } }
