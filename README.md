@@ -194,6 +194,42 @@ are then static, but identical in content.
 </details>
 
 <details>
+<summary><b>Nothing renders with <code>%matplotlib widget</code>, but <code>inline</code> and <code>qt</code> work</b></summary>
+
+If `%matplotlib inline` shows the plot and `%matplotlib qt` shows it in a separate
+window, then matplotlib and HyperSpy are fine - the interactive **widget** is not
+being rendered by JupyterLab. Work through this in order.
+
+**1. Reload the browser page properly.** Ctrl+Shift+R (Cmd+Shift+R on macOS).
+JupyterLab caches its extension bundle, and a stale cache is the most common cause.
+
+**2. Check which extensions are actually loaded:**
+
+```bash
+pixi run extensions
+```
+
+`jupyter-matplotlib` and `@jupyter-widgets/jupyterlab-manager` must both be listed
+as `enabled OK`, and they should come from the path inside `.pixi/envs/default`.
+If a second directory is listed - your own Jupyter installation, on Windows
+`%APPDATA%\jupyter\labextensions` - an older copy there can shadow the one pinned
+in this project. `pixi run lab` sets `JUPYTER_PREFER_ENV_PATH=1` to prevent that,
+so start JupyterLab that way and not with a system-wide `jupyter lab`.
+
+**3. Is it only plots, or all widgets?** Run `00_setup_check.ipynb`. Section 2
+tests an interactive plot, section 3 tests plain HyperSpy sliders.
+
+- Sliders appear, plot does not -> the problem is `ipympl` alone.
+- Neither appears -> the whole widget stack is not loading; see step 2.
+
+**4. If it stays broken, use `%matplotlib inline`.** Replace the first code cell of
+each notebook and restart the kernel. Everything in the workshop works; you lose
+zoom and the click-a-pixel navigator, nothing else. `m.gui()` is off by default
+anyway, and every interactive cell has a code variant next to it.
+
+</details>
+
+<details>
 <summary><b>A plot does not appear at all</b></summary>
 
 First find out whether the interactive backend is actually running. Put this in a
@@ -336,7 +372,7 @@ are untouched.
 ### Layout
 
 ```
-pixi.toml            package list (maintained by hand)
+pixi.toml            package list and the pixi tasks (maintained by hand)
 pixi.lock            exact versions of every package, all 4 platforms - do NOT edit by hand
 check_setup.py       setup check, also available as 'pixi run check'
 notebooks/
@@ -345,6 +381,20 @@ notebooks/
   0*.ipynb           the workshop notebooks
 data/                measurement data, excluded via .gitignore
 ```
+
+### Tasks
+
+```bash
+pixi run check        # verify the installation and the data
+pixi run lab          # start JupyterLab
+pixi run extensions   # list the active JupyterLab extensions
+```
+
+`lab` and `extensions` set `JUPYTER_PREFER_ENV_PATH=1` so that JupyterLab loads the
+extensions pinned in this project rather than any the user happens to have in their
+own Jupyter directory. That matters for participants who already have a Jupyter
+installation: an older `jupyter-matplotlib` there can shadow this one and interactive
+plots then fail to render with no error message.
 
 ### Versions
 
