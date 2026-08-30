@@ -194,6 +194,37 @@ are then static, but identical in content.
 </details>
 
 <details>
+<summary><b>A plot does not appear at all</b></summary>
+
+First find out whether the interactive backend is actually running. Put this in a
+cell and run it:
+
+```python
+import matplotlib, matplotlib.pyplot as plt
+print("backend    :", matplotlib.get_backend())
+print("interactive:", plt.isinteractive())
+print("figures    :", plt.get_fignums())
+```
+
+Expected inside a notebook: a backend whose name contains `widget`, `ipympl` or
+`nbagg` (matplotlib reports it as `widget` or as `module://ipympl.backend_nbagg`,
+depending on version), and `interactive: True`.
+
+- **Backend is something else** (`qtagg`, `agg`, ...): `%matplotlib widget` did not
+  take effect in this kernel. Restart the kernel and run the cells from the top.
+- **`interactive` is False**: figures are built but never shown. `plt.ion()` fixes
+  it for the session; a kernel restart fixes it properly.
+- **Backend and interactive are right but `figures` lists the figure anyway**: the
+  figure exists and the browser is not rendering it. Switch that notebook's first
+  cell to `%matplotlib inline` and restart the kernel. Plots are then static, but
+  they always appear.
+
+An exception in an earlier cell can leave the kernel in a state where this
+happens, so a restart is worth trying before anything else.
+
+</details>
+
+<details>
 <summary><b>Only one plot appears where there should be two ("Figure 2" missing)</b></summary>
 
 `signal.plot()` on a spectrum image normally opens **two** figures: a navigator -
