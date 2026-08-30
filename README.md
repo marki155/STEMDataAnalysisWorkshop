@@ -225,6 +225,34 @@ pixi run python -c "import sys; sys.path.insert(0,'notebooks'); import workshop_
 </details>
 
 <details>
+<summary><b><code>TraitError: Broken link ... the source value changed while updating the target</code></b></summary>
+
+This stops `multifit` part way through, usually with a line above it naming a
+model parameter, e.g. `<Parameter intensity of O_K component>`.
+
+**Cause:** an open `m.gui()` widget. It binds every model parameter to a slider.
+While fitting, the optimiser writes each parameter thousands of times per second;
+every value travels to the browser and comes back with float32 precision, so it
+differs in about the eighth digit. The binding sees the source change while it is
+updating the target and raises.
+
+**Fix:** re-run the cell that creates the model -
+
+```python
+m = signal_binned.create_model(auto_background=False)
+```
+
+A fresh model has no widget attached, and the fit runs. You do not need to restart
+the kernel.
+
+**Avoiding it:** the `m.gui()` cells in notebook 01 are switched off by default
+(`SHOW_GUI = False`) for exactly this reason. If you turn one on, re-create the
+model before you fit. Variant B, which prints the same information as text, has no
+such problem.
+
+</details>
+
+<details>
 <summary><b>The fit takes forever</b></summary>
 
 `multifit` fits every pixel separately. Raise the `rebin` factor, e.g. from
