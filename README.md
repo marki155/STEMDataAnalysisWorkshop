@@ -245,10 +245,10 @@ m = signal_binned.create_model(auto_background=False)
 A fresh model has no widget attached, and the fit runs. You do not need to restart
 the kernel.
 
-**Avoiding it:** the `m.gui()` cells in notebook 01 are switched off by default
-(`SHOW_GUI = False`) for exactly this reason. If you turn one on, re-create the
-model before you fit. Variant B, which prints the same information as text, has no
-such problem.
+**Avoiding it:** every `m.gui()` cell in notebooks 01 and 03 is switched off by
+default (`SHOW_GUI = False`) for exactly this reason. If you turn one on, re-create
+the model before you fit. Variant B, which prints the same information as text, has
+no such problem.
 
 </details>
 
