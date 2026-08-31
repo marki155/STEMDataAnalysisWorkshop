@@ -300,17 +300,23 @@ The package is installed; a compiled file next to it will not load. `pixi run ch
 prints a diagnosis for this case, including which of the causes below applies to
 your machine. In order of how often it is the answer:
 
-**1. The project sits in OneDrive (or Dropbox, Google Drive, ...).** This is the
-usual cause. With Files On-Demand a DLL is only a placeholder on disk until
-something opens it, and Windows cannot load a placeholder as a library. Sync also
-locks files while it works.
+**1. Cloud placeholders.** If the environment is inside a folder that OneDrive,
+Dropbox or similar actually syncs, Files On-Demand can leave a DLL as a
+placeholder rather than a real file, and Windows cannot load a placeholder as a
+library.
 
-Move the whole project out of the synced folder - `C:\Users\<you>\Projects\STEMDataAnalysisWorkshop`
-is fine - and run `pixi install` again. A 2 GB environment of compiled libraries
-does not belong in cloud sync in the first place; it is rebuilt from `pixi.lock`
-in minutes, so nothing is lost by not syncing it. Failing that, right-click the
-`.pixi` folder and choose **Always keep on this device**, wait for the sync to
-finish, and try again.
+`pixi run check` **measures** this rather than guessing from the folder name: it
+reads the Windows file attributes of the DLLs and reports how many are
+placeholders. A path that merely contains the word "OneDrive" is not evidence -
+plenty of such folders are not synced at all, and the check says so instead of
+blaming them.
+
+If placeholders are found: move the project out of the synced folder -
+`C:\Users\<you>\Projects\STEMDataAnalysisWorkshop` is fine - and run
+`pixi install` again. A 2 GB environment of compiled libraries does not belong in
+cloud sync; it is rebuilt from `pixi.lock` in minutes, so nothing is lost. Failing
+that, right-click the `.pixi` folder, choose **Always keep on this device**, and
+wait for the sync to finish.
 
 **2. The path is too long.** Windows refuses to load a library whose full path
 exceeds 260 characters. `pixi run check` measures the longest one it can find and

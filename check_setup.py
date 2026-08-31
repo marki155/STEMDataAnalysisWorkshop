@@ -3,6 +3,7 @@
 Run with:   pixi run check
 """
 
+import os
 import sys
 import warnings
 from pathlib import Path
@@ -27,6 +28,39 @@ print("=" * 60)
 
 SYNC_FOLDERS = ("onedrive", "dropbox", "google drive", "googledrive", "icloud", "nextcloud")
 
+# Windows marks a cloud file that is not really on disk with these attributes.
+# Python's stat module only ships the first one, so the others are spelled out.
+# A folder merely NAMED OneDrive proves nothing - only these bits do.
+FILE_ATTRIBUTE_OFFLINE = 0x00001000
+FILE_ATTRIBUTE_RECALL_ON_OPEN = 0x00040000
+FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS = 0x00400000
+PLACEHOLDER_BITS = (
+    FILE_ATTRIBUTE_OFFLINE | FILE_ATTRIBUTE_RECALL_ON_OPEN | FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS
+)
+
+
+def count_cloud_placeholders(folder, limit=400):
+    """How many DLLs in `folder` are cloud placeholders rather than real files?
+
+    Returns (placeholders, inspected). On anything other than Windows the
+    attribute does not exist and this returns (0, 0) - "not measurable here".
+    """
+    placeholders = inspected = 0
+    try:
+        for path in folder.rglob("*.dll"):
+            try:
+                attributes = os.stat(path).st_file_attributes
+            except (AttributeError, OSError):
+                return 0, 0
+            inspected += 1
+            if attributes & PLACEHOLDER_BITS:
+                placeholders += 1
+            if inspected >= limit:
+                break
+    except OSError:
+        pass
+    return placeholders, inspected
+
 
 def explain_dll_failure(module_name, error):
     """Windows: a package imports but its compiled part will not load."""
@@ -36,14 +70,14 @@ def explain_dll_failure(module_name, error):
     print("  file next to it could not be loaded. On Windows that has a short list of causes.")
     print()
 
-    synced = [folder for folder in SYNC_FOLDERS if folder in str(env).lower()]
-    if synced:
-        print(f"  1. THE ENVIRONMENT SITS INSIDE A SYNCED FOLDER ({synced[0]}).")
+    named = [folder for folder in SYNC_FOLDERS if folder in str(env).lower()]
+    placeholders, inspected = count_cloud_placeholders(env)
+
+    if placeholders:
+        print(f"  1. CLOUD PLACEHOLDERS FOUND: {placeholders} of {inspected} DLLs examined are")
+        print("     not really on disk. Windows cannot load a placeholder as a library,")
+        print("     so this is the cause.")
         print(f"     {env}")
-        print("     This is the usual cause. With Files On-Demand the DLL is only a")
-        print("     placeholder on disk until something opens it, and Windows cannot load")
-        print("     a placeholder as a library. Sync can also lock or quarantine files")
-        print("     while it works.")
         print()
         print("     Fix, best first:")
         print("       - Move the whole project out of the synced folder, e.g. to")
@@ -53,8 +87,17 @@ def explain_dll_failure(module_name, error):
         print("       - Or right-click the .pixi folder -> 'Always keep on this device',")
         print("         wait for the sync to finish, then try again.")
         print("       - Or exclude .pixi from syncing in the client's settings.")
+    elif inspected:
+        print(f"  1. Not cloud sync: none of the {inspected} DLLs examined is a placeholder,")
+        print("     they are all really on disk.")
+        if named:
+            print(f"     (The path contains \"{named[0]}\", but that is just a folder name here.)")
+    elif named:
+        print(f"  1. The path contains \"{named[0]}\", but whether files are cloud")
+        print("     placeholders could not be measured on this system. If this folder is")
+        print("     actively synced, that is the first thing to rule out.")
     else:
-        print("  1. Environment location looks fine (not inside a sync folder):")
+        print("  1. Environment location looks fine:")
         print(f"     {env}")
 
     longest = 0
@@ -136,16 +179,17 @@ if dll_failures:
     )
 
 # Warn about a synced folder even when nothing has broken yet.
-_synced = [f for f in SYNC_FOLDERS if f in sys.prefix.lower()]
-if _synced and not dll_failures:
-    print()
-    print(f"  [NOTE] This environment lives inside a {_synced[0]} folder:")
-    print(f"         {sys.prefix}")
-    print("         It works right now, but cloud sync and a 2 GB environment of compiled")
-    print("         libraries are a poor match: sync can turn files into placeholders that")
-    print("         Windows cannot load, which shows up later as 'DLL load failed'.")
-    print("         Consider moving the project outside the synced folder and running")
-    print("         'pixi install' again - it rebuilds from pixi.lock in minutes.")
+_named = [f for f in SYNC_FOLDERS if f in sys.prefix.lower()]
+if _named and not dll_failures:
+    _placeholders, _inspected = count_cloud_placeholders(Path(sys.prefix))
+    if _placeholders:
+        print()
+        print(f"  [WARNING] {_placeholders} of {_inspected} DLLs examined are cloud placeholders.")
+        print(f"            {sys.prefix}")
+        print("            Everything imports today, but a placeholder cannot be loaded once")
+        print("            sync evicts it, and that surfaces as 'DLL load failed'. Move the")
+        print("            project out of the synced folder and run 'pixi install' again -")
+        print("            it rebuilds from pixi.lock in minutes.")
 
 section("2. dm3/dm4 reader")
 try:
