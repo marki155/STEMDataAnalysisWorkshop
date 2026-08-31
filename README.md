@@ -85,9 +85,9 @@ cd STEMDataAnalysisWorkshop
 ## Step 3: get the measurement data
 
 The measurement data is **not** in the repository. You download it once,
-separately - the ZIP is 43 MB.
+separately.
 
-1. Download the data ZIP (43 MB, 152 MB unpacked): **<PUT THE DOWNLOAD LINK HERE>**
+1. Download the data ZIP (43 MB, 152 MB unpacked): **https://gigamove.rwth-aachen.de/de/download/6f85be27210b21f30d00327ccc0acc37**
 2. Unpack it.
 3. Place the `nanopore` folder so that it ends up looking **exactly** like this:
 
