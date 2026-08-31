@@ -438,6 +438,32 @@ Two facts drive its design, both checked against eXSpy 0.3.2 rather than assumed
   the L head - so both amplitudes float under one 130 eV-wide peak. The notebook
   detects this and ties the M family to the L family with a calibrated ratio.
 
+### Colours for the elemental maps
+
+Each element keeps its own hue, and lightness carries the amount. The hue belongs
+to the element rather than to its place in a list, so adding an element does not
+repaint the others. `ELEMENT_COLOURS` in `notebooks/phase_analysis.py` holds the
+table; `plot_element_maps()` draws the panels.
+
+The two sets the workshop draws side by side were checked as sets, not chosen by
+eye - both clear the separation floors for normal and colour-deficient vision:
+
+| Set | Colours | Worst pair (CVD / normal) |
+| --- | --- | --- |
+| Si, O, N | blue, orange, aqua | dE 9.2 / 24.0 |
+| Si, O, S, C | blue, orange, aqua, violet | dE 9.2 / 16.3 |
+
+Two limits, both reported at runtime rather than hidden:
+
+- **N and S share the aqua.** Four checked hues cannot cover five elements. They
+  never occur together in these notebooks; if they ever do, the function says so.
+- **Past four maps at once** no assignment stays distinguishable - that is the
+  colour space, not the table. Every panel carries the element name as its title,
+  so identity never rests on colour alone.
+
+Bright means more of the element, matching the usual convention for EELS and EDX
+maps. Pass `bright_is_more=False` for a light-background version for print.
+
 `phase_analysis.py` holds the parts that can be tested without a microscope: the
 line-overlap detector and the classification. It carries its own self-test against
 a layer stack whose answer is known:
