@@ -62,6 +62,12 @@ ELEMENT_COLOURS = {
     "W": "#eda100",    # yellow
     "Pt": "#008300",   # green
     "Ca": "#e87ba4",   # magenta
+    # Compounds, for reference-spectrum weight maps. Each takes the colour of the
+    # element that distinguishes it from plain silicon, which makes the figures
+    # read without a legend: SiO2 is the orange one because oxygen is orange.
+    # {Si, Si3N4, SiO2} = {blue, aqua, orange} is the validated three-hue set.
+    "SiO2": "#eb6834",   # orange, like O
+    "Si3N4": "#1baf7a",  # aqua, like N
 }
 FALLBACK_COLOUR = "#52514e"   # dark neutral for anything not listed
 SURFACE = "#fcfcfb"           # the page the maps sit on
@@ -349,6 +355,118 @@ def plot_phase_map(labels, names, ax=None, colours=None, title="Phase map"):
         frameon=False,
     )
     return ax
+
+
+# ---------------------------------------------------------------------------
+# Did the fit actually finish?
+# ---------------------------------------------------------------------------
+def check_fit_complete(model, label="fit", verbose=True, pinned_threshold=0.25):
+    """Warn when multifit did not reach every pixel.
+
+    This exists because an interrupted fit does not look like an error - it looks
+    like a result. HyperSpy walks the pixels row by row, so a fit that stops half
+    way leaves a map that is perfectly normal on top and exactly zero underneath,
+    with a straight horizontal edge. That is easy to interpret as a real boundary.
+
+    Every parameter carries an ``is_set`` flag per pixel, which is the honest
+    record of where the optimiser has actually been.
+
+    It also reports parameters that sit exactly on their own bound across a large
+    part of the map, which is the other way a fit fails while looking finished.
+    ``pinned_threshold`` is the share above which that counts as a problem; a few
+    percent of exact zeros is normal and correct with a non-negative solver.
+
+    Returns
+    -------
+    bool
+        True when every free parameter was set in every pixel and none of them is
+        pinned to a bound.
+    """
+    incomplete = {}
+    for component in model:
+        if not getattr(component, "active", True):
+            continue
+        for parameter in component.parameters:
+            if not parameter.free or parameter.map is None:
+                continue
+            # parameter.map is a structured numpy array, not a dict.
+            names = parameter.map.dtype.names
+            if not names or "is_set" not in names:
+                continue
+            flags = parameter.map["is_set"]
+            fraction = float(np.mean(np.asarray(flags, bool)))
+            if fraction < 1.0:
+                incomplete[f"{component.name}.{parameter.name}"] = fraction
+
+    # A fit can reach every pixel and still be worthless: if a parameter sits
+    # exactly on its own bound over a large area, the optimiser did not find a
+    # solution there, it ran into the wall and stopped. That looks like a black
+    # region in the map and is easy to mistake for a real boundary.
+    pinned = {}
+    for component in model:
+        if not getattr(component, "active", True):
+            continue
+        for parameter in component.parameters:
+            if not parameter.free or parameter.map is None:
+                continue
+            names = parameter.map.dtype.names
+            if not names or "values" not in names:
+                continue
+            values = np.asarray(parameter.map["values"], float)
+            for bound, tag in ((parameter.bmin, "bmin"), (parameter.bmax, "bmax")):
+                if bound is None:
+                    continue
+                share = float(np.mean(np.isclose(values, bound)))
+                if share > pinned_threshold:
+                    pinned[f"{component.name}.{parameter.name} at {tag}={bound:g}"] = share
+
+    if pinned and verbose:
+        print(f"[WARNING] {label}: parameters are stuck on their bounds.")
+        for key, share in sorted(pinned.items(), key=lambda kv: -kv[1]):
+            print(f"            {key:44s} {100 * share:5.1f}% of pixels")
+        print("          A few percent sitting on zero is normal with a non-negative")
+        print("          solver - that is the honest answer for a pixel with none of")
+        print(f"          that phase. A large share ({100 * pinned_threshold:.0f}% is the threshold here) is not:")
+        print("          it means the fit did not converge, it hit the wall.")
+        print("          With reference spectra that all describe the same edge, the")
+        print("          split between them is nearly degenerate, and the iterative")
+        print("          optimiser drifts from pixel to pixel because each one starts")
+        print("          from the previous pixel's result.")
+        print("          The model is linear in yscale, so solve it exactly instead:")
+        print("              model.multifit(optimizer=\"nnls\")")
+
+    if incomplete:
+        if verbose:
+            worst = min(incomplete.values())
+            print(f"[WARNING] {label} is INCOMPLETE - only {100 * worst:.1f}% of pixels were fitted.")
+            for key, fraction in sorted(incomplete.items(), key=lambda kv: kv[1]):
+                print(f"            {key:28s} {100 * fraction:5.1f}%")
+            print("          The maps below are part result, part untouched starting values.")
+            print("          Re-run multifit and let it run to the end before reading anything")
+            print("          out of them. An interrupted kernel is the usual reason.")
+        return False
+
+    if verbose and not pinned:
+        print(f"[ok] {label}: every pixel fitted, nothing stuck on a bound.")
+    return not pinned
+
+
+def mixture_cmap(low_species, high_species, neutral="#e8e7e3"):
+    """A two-pole colormap for a mixing fraction, e.g. SiO2 / (Si + SiO2).
+
+    A fraction with a meaningful middle is diverging data, so it gets two hues
+    with a neutral midpoint - never a single ramp, and never a rainbow. The two
+    poles are the species' own colours, so this figure agrees with the weight
+    maps beside it.
+    """
+    from matplotlib.colors import LinearSegmentedColormap, to_rgb
+
+    return LinearSegmentedColormap.from_list(
+        f"{low_species}_{high_species}_mix",
+        [to_rgb(ELEMENT_COLOURS.get(low_species, FALLBACK_COLOUR)),
+         to_rgb(neutral),
+         to_rgb(ELEMENT_COLOURS.get(high_species, FALLBACK_COLOUR))],
+    )
 
 
 # ---------------------------------------------------------------------------

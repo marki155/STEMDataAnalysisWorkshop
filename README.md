@@ -496,6 +496,36 @@ name to `OPTIONAL` in the same file so a missing file is a note, not an error.
 
 Never write fixed paths into a notebook - they break on the next machine.
 
+### Fitting reference spectra: use the linear solver
+
+Where a model is a sum of fixed reference shapes with only their heights free, it
+is **linear** in those heights. Do not fit it with the iterative optimiser:
+
+```python
+model.multifit(optimizer="nnls")     # not multifit(bounded=True)
+```
+
+`multifit` starts every pixel from the previous pixel's result. When several
+references describe the same edge - as Si, Si3N4 and SiO2 all do - the sum is well
+determined but the split between them is nearly degenerate, so the values drift
+from pixel to pixel and eventually stick on the `bmin = 0` wall and stay there.
+The map then shows a straight edge with everything beyond it exactly zero, which
+looks like a real boundary.
+
+Measured on the nanopore data, where the signal is symmetric top to bottom:
+
+| Solver | Row means of the fitted weight, top -> bottom |
+| --- | --- |
+| iterative, `bounded=True` | 12475 12229 ... 7102 3407 **0 0 0 0 0 0** |
+| `nnls` | 12475 12229 ... 6732 6790 7174 7759 8691 ... 12338 |
+
+`nnls` solves each pixel exactly and independently, with non-negativity built in.
+
+`check_fit_complete()` in `phase_analysis.py` catches both ways a fit fails while
+looking finished: pixels the optimiser never reached, and parameters pinned to a
+bound over more than a quarter of the map. A few percent of exact zeros is normal
+with a non-negative solver and is not reported.
+
 ### Two silent failure modes worth knowing about
 
 Both cost real time during development, because **neither raises an error**:
